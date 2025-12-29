@@ -1,4 +1,4 @@
-import { Agent } from "@/agent";
+import Agent from "@/agent";
 import loadPDF from "./nodes/loadPDF";
 import { logNode } from "@/nodes";
 
