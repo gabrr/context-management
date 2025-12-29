@@ -5,10 +5,10 @@ class LogNode extends BaseNode {
   id = "logNode";
 
   async run(ctx: IAgentContext): Promise<NodeResult | void> {
-    const previousResult = ctx.nodeResults?.at(-1);
+    console.log(ctx.lastNodeResult?.value);
     return {
       nodeId: this.id,
-      value: `logged: ${JSON.stringify(previousResult?.value)}`,
+      value: ctx.lastNodeResult?.value as string,
     };
   }
 }
