@@ -1,5 +1,17 @@
 import { NodeResult } from "@/nodes/core/node";
 
+export type ShortTermMemory =
+  | {
+      shortTerm: {
+        messages: Array<{ role: "user" | "agent"; content: string }>;
+      };
+      longTerm: {
+        search: (query: string) => Promise<unknown[]>;
+        writeNote: (note: string) => Promise<void>;
+      };
+    }
+  | { shortTerm: any };
+
 /**
  * Shared context passed to every node and the agent.
  * You can extend this with more fields as your application grows.
@@ -21,15 +33,7 @@ export interface IAgentContext {
   };
 
   // Optional: memory for nodes that want to use it
-  memory?: {
-    shortTerm: {
-      messages: Array<{ role: "user" | "agent"; content: string }>;
-    };
-    longTerm: {
-      search: (query: string) => Promise<unknown[]>;
-      writeNote: (note: string) => Promise<void>;
-    };
-  };
+  memory?: ShortTermMemory;
 
   // Optional: workflow metadata
   workflow?: {
