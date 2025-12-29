@@ -1,8 +1,12 @@
 import Agent from "@/agent";
 import { logNode } from "@/nodes";
 
-const agent = new Agent({ instructions: { system: "You are a sales agent." } });
+export const createSalesAgent = () => {
+  const agent = new Agent({
+    instructions: { system: "You are a sales agent." },
+  });
 
-agent.error(logNode).add(logNode);
+  agent.error(logNode).add(logNode);
 
-export default agent;
+  return agent;
+};

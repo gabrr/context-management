@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Sales Agent Chat</title>
+
+	<!-- Google Font (Apple-ish fallback stack below) -->
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+	<!-- Tailwind CDN -->
+	<script src="https://cdn.tailwindcss.com"></script>
+
+	<style>
+		:root {
+			color-scheme: dark;
+		}
+
+		body {
+			font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+				"SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial,
+				"Apple Color Emoji", "Segoe UI Emoji";
+		}
+
+		/* Subtle scrollbar */
+		.messages::-webkit-scrollbar {
+			width: 10px;
+		}
+
+		.messages::-webkit-scrollbar-thumb {
+			background: rgba(255, 255, 255, .12);
+			border-radius: 999px;
+		}
+
+		.messages::-webkit-scrollbar-track {
+			background: transparent;
+		}
+	</style>
+</head>
+
+<body class="min-h-screen bg-zinc-950 text-zinc-50">
+	<div class="mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-6">
+		<!-- Header -->
+		<header class="mb-4 flex items-center justify-between">
+			<div class="flex items-center gap-3">
+				<div class="grid h-10 w-10 place-items-center rounded-2xl bg-zinc-900 ring-1 ring-white/10" aria-hidden="true">
+					<span class="text-sm font-semibold">SA</span>
+				</div>
+				<div>
+					<h1 class="text-base font-semibold leading-5">Sales Agent</h1>
+					<p class="text-xs text-zinc-400">localhost:3000 • /api/v1/sales-agent/chat</p>
+				</div>
+			</div>
+
+			<button id="clearBtn"
+				class="rounded-xl bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 ring-1 ring-white/10 hover:bg-zinc-800 active:scale-[0.99]"
+				type="button">
+				Clear
+			</button>
+		</header>
+
+		<!-- Messages -->
+		<main id="messages"
+			class="messages flex-1 space-y-3 overflow-y-auto rounded-3xl bg-zinc-900/40 p-4 ring-1 ring-white/10"
+			aria-live="polite" aria-label="Chat messages">
+			<div class="mx-auto max-w-xl rounded-2xl bg-zinc-950/50 p-3 text-sm text-zinc-300 ring-1 ring-white/10">
+				<div class="font-medium text-zinc-100">Tip</div>
+				<div class="mt-1">Type a message and press Enter. Shift+Enter makes a new line.</div>
+			</div>
+		</main>
+
+		<!-- Composer -->
+		<form id="chatForm" class="mt-4">
+			<div class="flex items-end gap-3 rounded-3xl bg-zinc-900/40 p-3 ring-1 ring-white/10">
+				<textarea id="input" rows="1" placeholder="Message the agent…"
+					class="max-h-40 flex-1 resize-none rounded-2xl bg-zinc-950/40 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-500 ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-white/20"></textarea>
+
+				<button id="sendBtn" type="submit"
+					class="inline-flex h-11 items-center justify-center rounded-2xl bg-white px-5 text-sm font-semibold text-zinc-950 hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-60">
+					Send
+				</button>
+			</div>
+
+			<div class="mt-2 flex items-center justify-between px-1 text-xs text-zinc-500">
+				<span id="status">Ready</span>
+				<span>Enter to send • Shift+Enter for newline</span>
+			</div>
+		</form>
+	</div>
+
+	<script>
+		const API_URL = "http://localhost:3000/api/v1/sales-agent/chat";
+
+		const messagesEl = document.getElementById("messages");
+		const formEl = document.getElementById("chatForm");
+		const inputEl = document.getElementById("input");
+		const sendBtn = document.getElementById("sendBtn");
+		const clearBtn = document.getElementById("clearBtn");
+		const statusEl = document.getElementById("status");
+
+		// Auto-grow textarea
+		function autoGrow() {
+			inputEl.style.height = "auto";
+			inputEl.style.height = Math.min(inputEl.scrollHeight, 160) + "px";
+		}
+		inputEl.addEventListener("input", autoGrow);
+
+		// Enter to send, Shift+Enter newline
+		inputEl.addEventListener("keydown", (e) => {
+			if (e.key === "Enter" && !e.shiftKey) {
+				e.preventDefault();
+				formEl.requestSubmit();
+			}
+		});
+
+		function scrollToBottom() {
+			messagesEl.scrollTop = messagesEl.scrollHeight;
+		}
+
+		function bubble({ role, text, meta }) {
+			const wrap = document.createElement("div");
+			wrap.className =
+				role === "user"
+					? "flex justify-end"
+					: role === "error"
+						? "flex justify-start"
+						: "flex justify-start";
+
+			const b = document.createElement("div");
+			const base =
+				"max-w-[85%] rounded-3xl px-4 py-3 text-sm leading-relaxed ring-1 ring-white/10";
+			const styles =
+				role === "user"
+					? "bg-white text-zinc-950"
+					: role === "error"
+						? "bg-rose-500/15 text-rose-100 ring-rose-500/30"
+						: "bg-zinc-950/50 text-zinc-100";
+
+			b.className = base + " " + styles;
+			b.textContent = text;
+
+			if (meta) {
+				const m = document.createElement("div");
+				m.className = "mt-2 text-[11px] opacity-70";
+				m.textContent = meta;
+				b.appendChild(m);
+			}
+
+			wrap.appendChild(b);
+			messagesEl.appendChild(wrap);
+			scrollToBottom();
+			return b;
+		}
+
+		function setBusy(busy, msg) {
+			sendBtn.disabled = busy;
+			inputEl.disabled = busy;
+			statusEl.textContent = msg || (busy ? "Sending…" : "Ready");
+		}
+
+		function safeExtractReply(data) {
+			// Flexible: supports { reply }, { message }, { text }, { data: ... }, or string
+			if (data == null) return "";
+			if (typeof data === "string") return data;
+			if (typeof data.reply === "string") return data.reply;
+			if (typeof data.message === "string") return data.message;
+			if (typeof data.text === "string") return data.text;
+			if (data.data && typeof data.data === "string") return data.data;
+			return JSON.stringify(data, null, 2);
+		}
+
+		async function sendMessage(userText) {
+			bubble({ role: "user", text: userText });
+
+			setBusy(true, "Sending…");
+
+			// optimistic "typing" bubble
+			const typing = bubble({ role: "agent", text: "Typing…" });
+
+			try {
+				const res = await fetch(API_URL, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ message: userText }),
+				});
+
+				const contentType = res.headers.get("content-type") || "";
+				const data = contentType.includes("application/json")
+					? await res.json()
+					: await res.text();
+
+				if (!res.ok) {
+					const errText = typeof data === "string" ? data : safeExtractReply(data);
+					typing.remove();
+					bubble({
+						role: "error",
+						text: `Request failed (${res.status}).`,
+						meta: errText.slice(0, 4000),
+					});
+					return;
+				}
+
+				const reply = safeExtractReply(data) || "(No response body)";
+				typing.textContent = reply;
+			} catch (e) {
+				typing.remove();
+				bubble({
+					role: "error",
+					text: "Network error. Is your API running on localhost:3000?",
+					meta: String(e),
+				});
+			} finally {
+				setBusy(false, "Ready");
+				inputEl.focus();
+				scrollToBottom();
+			}
+		}
+
+		formEl.addEventListener("submit", async (e) => {
+			e.preventDefault();
+			const text = inputEl.value.trim();
+			if (!text) return;
+
+			inputEl.value = "";
+			autoGrow();
+			await sendMessage(text);
+		});
+
+		clearBtn.addEventListener("click", () => {
+			messagesEl.innerHTML = "";
+			bubble({
+				role: "agent",
+				text: "Cleared. What shall we do next?",
+			});
+		});
+
+		// Initial focus
+		inputEl.focus();
+		autoGrow();
+	</script>
+</body>
+
+</html>

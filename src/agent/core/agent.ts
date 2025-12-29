@@ -187,8 +187,6 @@ export class Agent extends BaseAgent {
       }
     }
 
-    console.log("Run completed. Final context: ", this.context);
-
     return this.context;
   }
 }
