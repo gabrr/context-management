@@ -6,89 +6,102 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>Sales Agent Chat</title>
 
-	<!-- Google Font (Apple-ish fallback stack below) -->
+	<!-- Google Font -->
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 
 	<!-- Tailwind CDN -->
 	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		tailwind.config = {
+			theme: {
+				extend: {
+					fontFamily: { sans: ["Inter", "system-ui", "sans-serif"] },
+				},
+			},
+		};
+	</script>
 
 	<style>
+		/* Meta-ish: clean, airy, subtle glass */
 		:root {
-			color-scheme: dark;
+			color-scheme: light;
 		}
 
-		body {
-			font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-				"SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial,
-				"Apple Color Emoji", "Segoe UI Emoji";
+		.glass {
+			background: rgba(255, 255, 255, 0.72);
+			backdrop-filter: blur(16px);
+			-webkit-backdrop-filter: blur(16px);
+			border: 1px solid rgba(0, 0, 0, 0.06);
 		}
 
-		/* Subtle scrollbar */
-		.messages::-webkit-scrollbar {
+		.soft-shadow {
+			box-shadow:
+				0 10px 30px rgba(0, 0, 0, 0.08),
+				0 1px 0 rgba(0, 0, 0, 0.06);
+		}
+
+		.focus-ring:focus {
+			outline: none;
+			box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+			border-color: rgba(59, 130, 246, 0.55);
+		}
+
+		/* nice scroll without extra libs */
+		#messages::-webkit-scrollbar {
 			width: 10px;
 		}
 
-		.messages::-webkit-scrollbar-thumb {
-			background: rgba(255, 255, 255, .12);
+		#messages::-webkit-scrollbar-thumb {
+			background: rgba(0, 0, 0, 0.12);
 			border-radius: 999px;
-		}
-
-		.messages::-webkit-scrollbar-track {
-			background: transparent;
+			border: 3px solid rgba(255, 255, 255, 0.8);
 		}
 	</style>
 </head>
 
-<body class="min-h-screen bg-zinc-950 text-zinc-50">
-	<div class="mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-6">
-		<!-- Header -->
-		<header class="mb-4 flex items-center justify-between">
-			<div class="flex items-center gap-3">
-				<div class="grid h-10 w-10 place-items-center rounded-2xl bg-zinc-900 ring-1 ring-white/10" aria-hidden="true">
-					<span class="text-sm font-semibold">SA</span>
-				</div>
+<body class="min-h-screen font-sans bg-gradient-to-b from-slate-50 to-white text-slate-900">
+	<div class="mx-auto max-w-3xl px-4 py-8">
+		<header class="mb-5">
+			<div class="flex items-center justify-between">
 				<div>
-					<h1 class="text-base font-semibold leading-5">Sales Agent</h1>
-					<p class="text-xs text-zinc-400">localhost:3000 • /api/v1/sales-agent/chat</p>
+					<h1 class="text-xl font-semibold tracking-tight">Sales Agent</h1>
+					<p class="text-sm text-slate-600">POST to <span class="font-mono">/api/v1/sales-agent/chat</span></p>
 				</div>
-			</div>
-
-			<button id="clearBtn"
-				class="rounded-xl bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 ring-1 ring-white/10 hover:bg-zinc-800 active:scale-[0.99]"
-				type="button">
-				Clear
-			</button>
-		</header>
-
-		<!-- Messages -->
-		<main id="messages"
-			class="messages flex-1 space-y-3 overflow-y-auto rounded-3xl bg-zinc-900/40 p-4 ring-1 ring-white/10"
-			aria-live="polite" aria-label="Chat messages">
-			<div class="mx-auto max-w-xl rounded-2xl bg-zinc-950/50 p-3 text-sm text-zinc-300 ring-1 ring-white/10">
-				<div class="font-medium text-zinc-100">Tip</div>
-				<div class="mt-1">Type a message and press Enter. Shift+Enter makes a new line.</div>
-			</div>
-		</main>
-
-		<!-- Composer -->
-		<form id="chatForm" class="mt-4">
-			<div class="flex items-end gap-3 rounded-3xl bg-zinc-900/40 p-3 ring-1 ring-white/10">
-				<textarea id="input" rows="1" placeholder="Message the agent…"
-					class="max-h-40 flex-1 resize-none rounded-2xl bg-zinc-950/40 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-500 ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-white/20"></textarea>
-
-				<button id="sendBtn" type="submit"
-					class="inline-flex h-11 items-center justify-center rounded-2xl bg-white px-5 text-sm font-semibold text-zinc-950 hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-60">
-					Send
+				<button id="clearBtn"
+					class="text-sm px-3 py-2 rounded-xl border border-black/10 bg-white hover:bg-slate-50 active:scale-[0.99] transition"
+					type="button">
+					Clear
 				</button>
 			</div>
+		</header>
 
-			<div class="mt-2 flex items-center justify-between px-1 text-xs text-zinc-500">
-				<span id="status">Ready</span>
-				<span>Enter to send • Shift+Enter for newline</span>
+		<main class="glass soft-shadow rounded-3xl overflow-hidden">
+			<div class="px-4 py-3 border-b border-black/5 bg-white/60">
+				<div class="flex items-center gap-2 text-sm text-slate-600">
+					<span class="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+					<span id="statusText">Ready</span>
+				</div>
 			</div>
-		</form>
+
+			<div id="messages" class="h-[62vh] overflow-y-auto p-4 space-y-3 bg-white/40"></div>
+
+			<div class="p-3 border-t border-black/5 bg-white/60">
+				<form id="chatForm" class="flex gap-2 items-start">
+					<div class="flex-1">
+						<label class="sr-only" for="messageInput">Message</label>
+						<textarea id="messageInput" rows="1" placeholder="Type a message…"
+							class="w-full resize-none rounded-2xl border border-black/10 bg-white px-4 py-3 text-[15px] focus-ring"></textarea>
+					</div>
+
+					<button id="sendBtn" type="submit"
+						class="rounded-2xl px-4 py-3 text-[15px] font-medium text-white bg-slate-900 hover:bg-slate-800 active:scale-[0.94] transition disabled:opacity-50 disabled:cursor-not-allowed">
+						Send
+					</button>
+				</form>
+			</div>
+		</main>
 	</div>
 
 	<script>
@@ -96,19 +109,109 @@
 
 		const messagesEl = document.getElementById("messages");
 		const formEl = document.getElementById("chatForm");
-		const inputEl = document.getElementById("input");
+		const inputEl = document.getElementById("messageInput");
 		const sendBtn = document.getElementById("sendBtn");
 		const clearBtn = document.getElementById("clearBtn");
-		const statusEl = document.getElementById("status");
+		const statusText = document.getElementById("statusText");
 
-		// Auto-grow textarea
+		// auto-grow textarea
 		function autoGrow() {
 			inputEl.style.height = "auto";
 			inputEl.style.height = Math.min(inputEl.scrollHeight, 160) + "px";
 		}
 		inputEl.addEventListener("input", autoGrow);
+		autoGrow();
 
-		// Enter to send, Shift+Enter newline
+		function scrollToBottom() {
+			messagesEl.scrollTop = messagesEl.scrollHeight;
+		}
+
+		function bubble({ role, text }) {
+			const wrap = document.createElement("div");
+			wrap.className = "flex";
+
+			const isUser = role === "user";
+			wrap.classList.add(isUser ? "justify-end" : "justify-start");
+
+			const b = document.createElement("div");
+			b.className =
+				"max-w-[85%] rounded-3xl px-4 py-3 text-[15px] leading-6 border " +
+				(isUser
+					? "bg-slate-900 text-white border-slate-900"
+					: "bg-white text-slate-900 border-black/10");
+
+			// keep it simple: safe text only
+			b.textContent = text;
+
+			wrap.appendChild(b);
+			messagesEl.appendChild(wrap);
+			scrollToBottom();
+		}
+
+		function setStatus(text, busy = false) {
+			statusText.textContent = text;
+			sendBtn.disabled = busy;
+			inputEl.disabled = busy;
+		}
+
+		async function sendMessage(message) {
+			setStatus("Sending…", true);
+
+			try {
+				const res = await fetch(API_URL, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ message }),
+				});
+
+				const contentType = res.headers.get("content-type") || "";
+				let data;
+
+				if (contentType.includes("application/json")) {
+					data = await res.json();
+				} else {
+					data = await res.text();
+				}
+
+				if (!res.ok) {
+					const msg = typeof data === "string" ? data : (data?.error || JSON.stringify(data));
+					throw new Error(msg || "Request failed");
+				}
+
+				// Flexible: accept common response shapes
+				// - { message: "..." }
+				// - { reply: "..." }
+				// - { data: "..." }
+				// - plain text
+				const reply =
+					typeof data === "string"
+						? data
+						: (data?.message ?? data?.reply ?? data?.data ?? JSON.stringify(data));
+
+				bubble({ role: "agent", text: reply });
+				setStatus("Ready");
+			} catch (err) {
+				bubble({ role: "agent", text: `Error: ${err.message}` });
+				setStatus("Ready");
+				hintEl.textContent = "Check your server/CORS and endpoint response format.";
+			} finally {
+				setStatus("Ready", false);
+				inputEl.focus();
+			}
+		}
+
+		formEl.addEventListener("submit", (e) => {
+			e.preventDefault();
+			const message = inputEl.value.trim();
+			if (!message) return;
+
+			bubble({ role: "user", text: message });
+			inputEl.value = "";
+			autoGrow();
+			sendMessage(message);
+		});
+
+		// Enter to send, Shift+Enter for newline
 		inputEl.addEventListener("keydown", (e) => {
 			if (e.key === "Enter" && !e.shiftKey) {
 				e.preventDefault();
@@ -116,130 +219,11 @@
 			}
 		});
 
-		function scrollToBottom() {
-			messagesEl.scrollTop = messagesEl.scrollHeight;
-		}
-
-		function bubble({ role, text, meta }) {
-			const wrap = document.createElement("div");
-			wrap.className =
-				role === "user"
-					? "flex justify-end"
-					: role === "error"
-						? "flex justify-start"
-						: "flex justify-start";
-
-			const b = document.createElement("div");
-			const base =
-				"max-w-[85%] rounded-3xl px-4 py-3 text-sm leading-relaxed ring-1 ring-white/10";
-			const styles =
-				role === "user"
-					? "bg-white text-zinc-950"
-					: role === "error"
-						? "bg-rose-500/15 text-rose-100 ring-rose-500/30"
-						: "bg-zinc-950/50 text-zinc-100";
-
-			b.className = base + " " + styles;
-			b.textContent = text;
-
-			if (meta) {
-				const m = document.createElement("div");
-				m.className = "mt-2 text-[11px] opacity-70";
-				m.textContent = meta;
-				b.appendChild(m);
-			}
-
-			wrap.appendChild(b);
-			messagesEl.appendChild(wrap);
-			scrollToBottom();
-			return b;
-		}
-
-		function setBusy(busy, msg) {
-			sendBtn.disabled = busy;
-			inputEl.disabled = busy;
-			statusEl.textContent = msg || (busy ? "Sending…" : "Ready");
-		}
-
-		function safeExtractReply(data) {
-			// Flexible: supports { reply }, { message }, { text }, { data: ... }, or string
-			if (data == null) return "";
-			if (typeof data === "string") return data;
-			if (typeof data.reply === "string") return data.reply;
-			if (typeof data.message === "string") return data.message;
-			if (typeof data.text === "string") return data.text;
-			if (data.data && typeof data.data === "string") return data.data;
-			return JSON.stringify(data, null, 2);
-		}
-
-		async function sendMessage(userText) {
-			bubble({ role: "user", text: userText });
-
-			setBusy(true, "Sending…");
-
-			// optimistic "typing" bubble
-			const typing = bubble({ role: "agent", text: "Typing…" });
-
-			try {
-				const res = await fetch(API_URL, {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ message: userText }),
-				});
-
-				const contentType = res.headers.get("content-type") || "";
-				const data = contentType.includes("application/json")
-					? await res.json()
-					: await res.text();
-
-				if (!res.ok) {
-					const errText = typeof data === "string" ? data : safeExtractReply(data);
-					typing.remove();
-					bubble({
-						role: "error",
-						text: `Request failed (${res.status}).`,
-						meta: errText.slice(0, 4000),
-					});
-					return;
-				}
-
-				const reply = safeExtractReply(data) || "(No response body)";
-				typing.textContent = reply;
-			} catch (e) {
-				typing.remove();
-				bubble({
-					role: "error",
-					text: "Network error. Is your API running on localhost:3000?",
-					meta: String(e),
-				});
-			} finally {
-				setBusy(false, "Ready");
-				inputEl.focus();
-				scrollToBottom();
-			}
-		}
-
-		formEl.addEventListener("submit", async (e) => {
-			e.preventDefault();
-			const text = inputEl.value.trim();
-			if (!text) return;
-
-			inputEl.value = "";
-			autoGrow();
-			await sendMessage(text);
-		});
-
 		clearBtn.addEventListener("click", () => {
 			messagesEl.innerHTML = "";
-			bubble({
-				role: "agent",
-				text: "Cleared. What shall we do next?",
-			});
+			setStatus("Ready");
+			inputEl.focus();
 		});
-
-		// Initial focus
-		inputEl.focus();
-		autoGrow();
 	</script>
 </body>
 
