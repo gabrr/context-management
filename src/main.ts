@@ -1,3 +1,1 @@
-import agent from "./playground/csv-demo";
-
-agent.run({ user: { request: "inter.pdf" } });
+console.log("Context Management System Started");
