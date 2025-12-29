@@ -1,4 +1,4 @@
-import Agent from "@/agent";
+import { Agent } from "@/agent/core/agent";
 
 const agent = new Agent({ instructions: { system: "example" } });
 

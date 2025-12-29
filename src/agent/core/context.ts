@@ -1,4 +1,4 @@
-import { NodeResult } from "../../nodes/core/node";
+import { NodeResult } from "@/nodes/core/node";
 
 /**
  * Shared context passed to every node and the agent.
