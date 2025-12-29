@@ -11,11 +11,9 @@ app.use(express.json());
 app.use(cors({ origin: "*" }));
 
 const beautifyResponse = (response: IAgentContext) => {
-  return response.nodeResults
-    ?.map((result) => {
-      return `${result.nodeId}: ${result.value} <br />`;
-    })
-    .join("\n");
+  return `${response.lastNodeResult?.nodeId}: ${
+    response.lastNodeResult?.value as string
+  }`;
 };
 
 const memory = createShortMemory({ maxTurns: 16 });
