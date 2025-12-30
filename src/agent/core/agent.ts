@@ -111,8 +111,8 @@ export abstract class BaseAgent implements IAgent {
  * - Captures node return values and stores them in ctx.nodeResults
  */
 export class Agent extends BaseAgent {
-  constructor(initialContext: IAgentContext) {
-    super(initialContext);
+  constructor(initialContext?: IAgentContext) {
+    super(initialContext ?? { instructions: { system: "" } });
   }
 
   async run(initial?: Partial<IAgentContext>): Promise<IAgentContext> {
