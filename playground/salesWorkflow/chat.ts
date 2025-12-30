@@ -1,6 +1,7 @@
 import { BaseNode, NodeResult } from "@/nodes";
 import { IAgentContext } from "@/agent";
 import { createAgent } from "@/factories/agentMaker";
+import { IntentResult, SalesIntent } from "./types";
 
 export const createSystemPrompt = (history: MemoryMsg[]) => {
   const historyText = history
@@ -8,11 +9,16 @@ export const createSystemPrompt = (history: MemoryMsg[]) => {
     .join("\n");
 
   return `
-  You are a sales agent.
-  Previous conversation history:
-  ${historyText}
+You are a Toque da Terra assistant.
+Tone: friendly, polite, concise, respectful, not too intimate.
+Use the history if relevant, otherwise focus on the latest message.
 
-  Answer the user's latest message based on the history above if relevant.
+Company: Toque da Terra (spices).
+
+History:
+${historyText}
+
+==
   `;
 };
 
@@ -24,16 +30,60 @@ interface MemoryMsg {
 class ChatNode extends BaseNode {
   id = "chat";
   // Using the same model as intent_classifier for consistency, presumably available locally
-  llm = createAgent("ollama", "qwen2.5:1.5b-instruct");
+  llm = createAgent("ollama", "llama3.2:3b");
+
+  private getIntent(ctx: IAgentContext): IntentResult | null {
+    const intentResult = (ctx.nodeResults ?? [])
+      .slice()
+      .reverse()
+      .find((r) => r?.nodeId === "intentClassifier")?.value as
+      | IntentResult
+      | undefined;
+
+    return intentResult ?? null;
+  }
 
   async run(ctx: IAgentContext): Promise<NodeResult> {
     // Access memory from context.
     // We assume ctx.memory.shortTerm is the array of messages from playground/memory.ts
     const history = (ctx.memory?.shortTerm as MemoryMsg[]) || [];
 
-    const systemPrompt = createSystemPrompt(history);
+    const hasPreviousAnswer = (ctx.nodeResults ?? []).some(
+      (r) => r.nodeId !== "intentClassifier"
+    );
 
-    console.log(systemPrompt);
+    if (hasPreviousAnswer) {
+      ctx.tools?.logger?.(
+        "[chat] skipped: previous node already produced an answer",
+        {}
+      );
+      return {
+        nodeId: this.id,
+        value: { status: "skipped", reason: "previous_answer" },
+      };
+    }
+
+    const intent = this.getIntent(ctx);
+    if (
+      intent &&
+      intent.intent !== SalesIntent.CHAT &&
+      intent.intent !== SalesIntent.UNKNOWN
+    ) {
+      ctx.tools?.logger?.(
+        `[chat] skipped: intent ${intent.intent} not CHAT/UNKNOWN`,
+        {}
+      );
+      return {
+        nodeId: this.id,
+        value: {
+          status: "skipped",
+          reason: "intent_not_chat",
+          intent: intent.intent,
+        },
+      };
+    }
+
+    const systemPrompt = createSystemPrompt(history);
 
     const userMessage = ctx.user?.request ?? "";
 
