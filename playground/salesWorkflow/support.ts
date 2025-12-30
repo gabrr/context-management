@@ -1,15 +1,10 @@
 import { IAgentContext } from "@/agent";
 import { NodeResult } from "@/nodes";
 import { createAgent } from "@/factories/agentMaker";
-import { BaseHandlerNode } from "./baseHandler";
-import { SalesIntent } from "./types";
 
-class SupportNode extends BaseHandlerNode {
+class SupportNode {
   llm = createAgent("ollama", "qwen2.5:1.5b-instruct");
-
-  constructor() {
-    super("support", SalesIntent.SUPPORT);
-  }
+  id = "support";
 
   private formatHistory(ctx: IAgentContext) {
     const history = (ctx.memory?.shortTerm as any[]) || [];
@@ -19,7 +14,7 @@ class SupportNode extends BaseHandlerNode {
       .trim();
   }
 
-  protected async handle(ctx: IAgentContext): Promise<NodeResult> {
+  async run(ctx: IAgentContext): Promise<NodeResult> {
     const historyText = this.formatHistory(ctx);
     const userMessage = ctx.user?.request ?? "";
 

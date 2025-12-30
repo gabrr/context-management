@@ -1,16 +1,11 @@
 import { IAgentContext } from "@/agent";
 import { NodeResult } from "@/nodes";
 import { createAgent } from "@/factories/agentMaker";
-import { BaseHandlerNode } from "./baseHandler";
 import { MOCK_ORDERS } from "./mockData";
-import { SalesIntent } from "./types";
 
-class OrderTrackingNode extends BaseHandlerNode {
+class OrderTrackingNode {
   llm = createAgent("ollama", "qwen2.5:1.5b-instruct");
-
-  constructor() {
-    super("orderTracking", SalesIntent.ORDER_TRACKING);
-  }
+  id = "orderTracking";
 
   private extractOrderId(message: string): string | null {
     const match = String(message ?? "")
@@ -27,7 +22,7 @@ class OrderTrackingNode extends BaseHandlerNode {
       .trim();
   }
 
-  protected async handle(ctx: IAgentContext): Promise<NodeResult> {
+  async run(ctx: IAgentContext): Promise<NodeResult> {
     const historyText = this.formatHistory(ctx);
     const userMessage = ctx.user?.request ?? "";
 
